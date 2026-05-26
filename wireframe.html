@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Rebro Lite - ワイヤーフレーム</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: #e8eaed;
+    color: #333;
+    padding: 20px;
+    font-size: 13px;
+  }
+  h1 { font-size: 18px; margin-bottom: 8px; color: #222; }
+  .intro {
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 12px 16px;
+    margin-bottom: 28px;
+    border-radius: 4px;
+    line-height: 1.6;
+    font-size: 12px;
+    color: #555;
+  }
+  h2 {
+    font-size: 14px;
+    margin: 30px 0 10px;
+    padding: 6px 10px;
+    background: #444;
+    color: #fff;
+    border-radius: 3px;
+  }
+  .screen {
+    background: #fafafa;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .screen-header {
+    background: #2d3748;
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-left .project-name {
+    background: #1a202c;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-size: 11px;
+  }
+  .header-buttons { display: flex; gap: 6px; }
+  .header-btn {
+    padding: 3px 10px;
+    background: #4a5568;
+    border-radius: 2px;
+    font-size: 11px;
+  }
+  .header-btn.primary { background: #4299e1; }
+  .header-btn.undo { background: #5a6478; }
+  .screen-header .tabs { display: flex; gap: 4px; margin-left: auto; }
+  .screen-header .tab {
+    padding: 3px 10px;
+    background: #4a5568;
+    border-radius: 2px;
+    font-size: 11px;
+    cursor: default;
+  }
+  .screen-header .tab.active {
+    background: #4299e1;
+    color: #fff;
+  }
+  .screen-header .view-toggle {
+    padding: 3px 10px;
+    background: #805ad5;
+    border-radius: 2px;
+    font-size: 11px;
+  }
+  .screen-body {
+    display: flex;
+    height: 420px;
+    background: #fff;
+  }
+  .sidebar-left, .sidebar-right {
+    width: 180px;
+    background: #f5f7fa;
+    border-right: 1px solid #ddd;
+    padding: 10px;
+    font-size: 12px;
+    overflow-y: auto;
+  }
+  .sidebar-right { border-right: none; border-left: 1px solid #ddd; }
+  .sidebar-section {
+    margin-bottom: 14px;
+  }
+  .sidebar-section-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 2px;
+  }
+  .sidebar-item {
+    padding: 4px 6px;
+    margin: 2px 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sidebar-item.active {
+    background: #ebf8ff;
+    border-color: #4299e1;
+    color: #2b6cb0;
+    font-weight: bold;
+  }
+  .color-chip {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin-right: 4px;
+    border-radius: 2px;
+  }
+  .input-field {
+    width: 100%;
+    padding: 3px 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 2px;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .canvas-area {
+    flex: 1;
+    background:
+      linear-gradient(to right, #ebebeb 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(to bottom, #ebebeb 1px, transparent 1px) 0 0/40px 40px,
+      #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .obstacle {
+    position: absolute;
+    background: #d4d1c0;
+    border: 1px solid #b8b5a0;
+    font-size: 10px;
+    color: #555;
+    padding: 1px 4px;
+  }
+  .obstacle.column { background: #c4c0a8; border-color: #9b9580; }
+  .pipe {
+    position: absolute;
+    height: 3px;
+    background: #2b6cb0;
+    border-radius: 2px;
+  }
+  .pipe.vertical {
+    width: 3px;
+    height: auto;
+  }
+  .pipe.drain { background: #805ad5; }
+  .pipe.cwh { background: #38a169; }
+  .pipe.clash { background: #c53030; box-shadow: 0 0 0 2px rgba(197,48,48,0.3); }
+  .duct {
+    position: absolute;
+    background: #faf089;
+    border: 1.5px solid #d69e2e;
+    height: 14px;
+    opacity: 0.85;
+  }
+  .duct.vertical {
+    width: 14px;
+    height: auto;
+  }
+  .node {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border: 2px solid #2b6cb0;
+    border-radius: 50%;
+    transform: translate(-4px, -4px);
+  }
+  .node.elbow { background: #2b6cb0; }
+  .node.tee { background: #38a169; border-color: #38a169; }
+  .node.selected {
+    box-shadow: 0 0 0 4px rgba(246,224,94,0.8);
+    border-color: #d69e2e;
+  }
+  .equipment {
+    position: absolute;
+    background: #fefcbf;
+    border: 1.5px solid #b7791f;
+    font-size: 10px;
+    text-align: center;
+    padding: 3px;
+    color: #744210;
+    font-weight: bold;
+  }
+  .clash-mark {
+    position: absolute;
+    color: #c53030;
+    font-size: 18px;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
+  }
+  .clearance-mark {
+    position: absolute;
+    color: #3182ce;
+    font-size: 16px;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
+  }
+  .sleeve-mark {
+    position: absolute;
+    color: #c05621;
+    font-size: 14px;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
+  }
+  .status-bar {
+    background: #2d3748;
+    color: #cbd5e0;
+    padding: 4px 12px;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .panel {
+    width: 240px;
+    background: #f5f7fa;
+    border-left: 1px solid #ddd;
+    padding: 10px;
+    font-size: 11px;
+    overflow-y: auto;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #ddd;
+  }
+  .panel-section { margin-bottom: 12px; }
+  .property-panel {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 230px;
+    background: #fff;
+    border: 1px solid #999;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .property-panel-title {
+    font-size: 12px;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+  }
+  .property-row {
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+    font-size: 11px;
+  }
+  .property-label { width: 90px; color: #555; }
+  .property-value {
+    flex: 1;
+    background: #f9f9f9;
+    padding: 3px 6px;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+  }
+  .property-value.readonly { background: #edf2f7; color: #555; }
+  .property-hint {
+    font-size: 9px;
+    color: #888;
+    margin-left: 90px;
+    margin-bottom: 4px;
+  }
+  .clash-item, .warn-item, .sleeve-item {
+    background: #fff;
+    border: 1px solid #fed7d7;
+    border-left: 3px solid #c53030;
+    padding: 4px 6px;
+    margin-bottom: 5px;
+    border-radius: 2px;
+  }
+  .clearance-item {
+    background: #ebf8ff;
+    border: 1px solid #bee3f8;
+    border-left: 3px solid #3182ce;
+    padding: 4px 6px;
+    margin-bottom: 5px;
+    border-radius: 2px;
+  }
+  .warn-item {
+    background: #fffaf0;
+    border-color: #feebc8;
+    border-left-color: #dd6b20;
+  }
+  .sleeve-item {
+    background: #fff5f5;
+    border-color: #fbd38d;
+    border-left-color: #c05621;
+  }
+  .item-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #c53030;
+  }
+  .clearance-item .item-title { color: #2c5282; }
+  .warn-item .item-title { color: #c05621; }
+  .sleeve-item .item-title { color: #9c4221; }
+  .item-detail { font-size: 10px; color: #555; margin-top: 2px; }
+  .legend {
+    background: #fff;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: -8px 0 24px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: #555;
+  }
+  .legend strong { color: #2d3748; }
+  .drawer {
+    background: #fff;
+    height: 460px;
+    margin: 12px;
+    padding: 16px 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    overflow-y: auto;
+  }
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .drawer-title { font-size: 14px; font-weight: bold; }
+  .table-title {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 12px 0 6px;
+    color: #444;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  th {
+    background: #edf2f7;
+    border: 1px solid #cbd5e0;
+    padding: 4px 8px;
+    text-align: left;
+  }
+  td {
+    border: 1px solid #cbd5e0;
+    padding: 4px 8px;
+  }
+  td.num { text-align: right; }
+  .btn-primary {
+    background: #4299e1;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 3px;
+    font-size: 12px;
+    margin-top: 8px;
+    display: inline-block;
+  }
+  .modal-overlay {
+    background: rgba(0,0,0,0.4);
+    height: 460px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal {
+    background: #fff;
+    width: 480px;
+    max-height: 400px;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+  }
+  .sample-card {
+    background: #f7fafc;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: default;
+  }
+  .sample-card-title { font-weight: bold; font-size: 13px; margin-bottom: 4px; }
+  .sample-card-detail { font-size: 11px; color: #666; }
+  .iso-canvas {
+    flex: 1;
+    background: #fafbfc;
+    position: relative;
+    overflow: hidden;
+  }
+  .iso-frame {
+    position: absolute;
+    background: #b8b5a0;
+    border: 1px solid #555;
+    transform: skewY(-30deg);
+    transform-origin: top left;
+  }
+  .iso-pipe {
+    position: absolute;
+    height: 3px;
+    background: #2b6cb0;
+    transform: skewY(-30deg);
+    transform-origin: top left;
+  }
+  .floor-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 3px;
+  }
+  .zoom-controls {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .zoom-btn {
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 13px;
+    text-align: center;
+    line-height: 22px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Rebro Lite ワイヤーフレーム</h1>
+<div class="intro">
+  設備BIMプロトタイプ「Rebro Lite」の画面構成図。<br>
+  全画面共通:ヘッダー(プロジェクト名・Undoボタン・保存ボタン・メニュー)、画面右上のタブで作業モード切替、ステータスバーで現在モードと統計を表示。<br>
+  画面切替は単一画面の中でタブ・パネル・モーダルで実現する単一ページ構成。
+</div>
+
+<!-- 画面1: ランチャー(モーダル) -->
+<h2>画面1: プロジェクト選択(モーダル表示)</h2>
+<div class="screen">
+  <div class="screen-header">
+    <div class="header-left">
+      <span>Rebro Lite</span>
+      <span class="project-name">新規プロジェクト</span>
+    </div>
+    <div class="header-buttons">
+      <span class="header-btn undo">↶ 戻る</span>
+      <span class="header-btn primary">保存</span>
+      <span class="header-btn">メニュー ▾</span>
+    </div>
+    <div class="tabs">
+      <span class="view-toggle">▢ 平面</span>
+      <span class="tab active">配管</span>
+      <span class="tab">ダクト</span>
+      <span class="tab">躯体</span>
+      <span class="tab">機器</span>
+      <span class="tab">選択</span>
+      <span class="tab">干渉</span>
+      <span class="tab">集計</span>
+    </div>
+  </div>
+  <div class="modal-overlay">
+    <div class="modal">
+      <div class="modal-title">サンプルから開く</div>
+      <div class="sample-card">
+        <div class="sample-card-title">設計レビュー前(干渉あり)</div>
+        <div class="sample-card-detail">配管 5本、ダクト 3本、干渉 3件、離隔不足 2件、梁スリーブ要 3件<br>レビューで指摘される典型的な問題を含むサンプル</div>
+      </div>
+      <div class="sample-card">
+        <div class="sample-card-title">設計レビュー後(問題解消)</div>
+        <div class="sample-card-detail">配管 5本、ダクト 3本、干渉 0件、離隔不足 0件<br>レビューを経て問題が解消された完成形のサンプル</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="legend">
+  <strong>説明:</strong> 起動直後、メニュー→「サンプルから開く」で表示されるモーダル。「保存済みから開く」「新規プロジェクト」「JSONインポート」もメニュー経由で選択可能。<br>
+  デモケースの2サンプルは設計レビュー前後の対比で、Rebro の価値訴求(=干渉発見と解消の体験)を即座に示せる構成。
+</div>
+
+<!-- 画面2: メイン作図画面 -->
+<h2>画面2: メイン作図画面(配管描画モード)</h2>
+<div class="screen">
+  <div class="screen-header">
+    <div class="header-left">
+      <span>Rebro Lite</span>
+      <span class="project-name">設計レビュー前(干渉あり)</span>
+    </div>
+    <div class="header-buttons">
+      <span class="header-btn undo">↶ 戻る</span>
+      <span class="header-btn primary">保存</span>
+      <span class="header-btn">メニュー ▾</span>
+    </div>
+    <div class="tabs">
+      <span class="view-toggle">▢ 平面</span>
+      <span class="tab active">配管</span>
+      <span class="tab">ダクト</span>
+      <span class="tab">躯体</span>
+      <span class="tab">機器</span>
+      <span class="tab">選択</span>
+      <span class="tab">干渉</span>
+      <span class="tab">集計</span>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="sidebar-left">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">配管種別</div>
+        <div class="sidebar-item active"><span class="color-chip" style="background:#2b6cb0"></span>給水</div>
+        <div class="sidebar-item"><span class="color-chip" style="background:#805ad5"></span>排水</div>
+        <div class="sidebar-item"><span class="color-chip" style="background:#38a169"></span>冷温水</div>
+        <div class="sidebar-item"><span class="color-chip" style="background:#0bc5ea"></span>ドレン</div>
+        <div class="sidebar-item"><span class="color-chip" style="background:#dd6b20"></span>電気</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">口径</div>
+        <div class="sidebar-item">φ25</div>
+        <div class="sidebar-item">φ40</div>
+        <div class="sidebar-item active">φ50</div>
+        <div class="sidebar-item">φ75</div>
+        <div class="sidebar-item">φ100</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">配管レベル</div>
+        <div>FL+ <input class="input-field" value="2500" style="width:60px; display:inline-block"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">系統</div>
+        <div class="sidebar-item">給-1 (5本)</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">操作</div>
+        <div class="sidebar-item">表示リセット</div>
+        <div class="sidebar-item" style="color:#c53030">配管 全クリア</div>
+      </div>
+    </div>
+    <div class="canvas-area">
+      <div class="obstacle" style="left: 80px; top: 50px; width: 320px; height: 12px;">梁 GX1</div>
+      <div class="obstacle column" style="left: 70px; top: 40px; width: 30px; height: 30px;">柱 C1</div>
+      <div class="obstacle column" style="left: 380px; top: 40px; width: 30px; height: 30px;">柱 C2</div>
+      <div class="obstacle" style="left: 90px; top: 130px; width: 12px; height: 200px;"></div>
+      <div class="obstacle" style="left: 80px; top: 200px; width: 320px; height: 12px;">梁 GX3</div>
+      <div class="pipe" style="left: 130px; top: 100px; width: 200px;"></div>
+      <div class="pipe vertical" style="left: 330px; top: 100px; height: 80px;"></div>
+      <div class="pipe" style="left: 330px; top: 180px; width: 100px;"></div>
+      <div class="node" style="left: 130px; top: 100px;"></div>
+      <div class="node elbow" style="left: 330px; top: 100px;"></div>
+      <div class="node elbow" style="left: 330px; top: 180px;"></div>
+      <div class="node" style="left: 430px; top: 180px;"></div>
+      <div class="floor-info">
+        3F 階高 3000<br>CH 2700 天井懐 300
+      </div>
+      <div class="zoom-controls">
+        <span class="zoom-btn">+</span>
+        <span class="zoom-btn">−</span>
+        <span class="zoom-btn">⛶</span>
+      </div>
+    </div>
+    <div class="sidebar-right">
+      <div class="panel-title">レイヤ</div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">配管</div>
+        <div class="sidebar-item">👁 <span class="color-chip" style="background:#2b6cb0"></span>給水</div>
+        <div class="sidebar-item">👁 <span class="color-chip" style="background:#805ad5"></span>排水</div>
+        <div class="sidebar-item">👁 <span class="color-chip" style="background:#38a169"></span>冷温水</div>
+        <div class="sidebar-item">👁 <span class="color-chip" style="background:#0bc5ea"></span>ドレン</div>
+        <div class="sidebar-item">👁 <span class="color-chip" style="background:#dd6b20"></span>電気</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">ダクト</div>
+        <div class="sidebar-item">👁 給気/還気/排気/外気</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">躯体</div>
+        <div class="sidebar-item">👁 梁</div>
+        <div class="sidebar-item">👁 柱</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">機器</div>
+        <div class="sidebar-item">👁 室内機/ポンプ/AHU</div>
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span>視点: 平面 | モード: 配管描画 | 給水 φ50 / FL+2500</span>
+    <span>配管: 5本 / ダクト: 3本 / 躯体: 21 / 機器: 0 | 干渉: 0 | 離隔: 0 | スリーブ: 3 | 倍率: 100%</span>
+  </div>
+</div>
+<div class="legend">
+  <strong>説明:</strong> 中央キャンバスがメイン作図領域。クリックで節点を打ち、配管を描画する。直角コーナーで継手(エルボ/チーズ/クロス)を自動判定。<br>
+  左サイドバー:管種・口径・レベル(配管設定)。右サイドバー:レイヤ表示制御。系統名クリックでハイライト可能。<br>
+  上部タブ:作業モード切替(配管・ダクト・躯体・機器・選択・干渉・集計)。左上の「平面」ボタンでアイソメ図に切替。
+</div>
+
+<!-- 画面3: 属性編集パネル -->
+<h2>画面3: 属性編集パネル(選択モード)</h2>
+<div class="screen">
+  <div class="screen-header">
+    <div class="header-left">
+      <span>Rebro Lite</span>
+      <span class="project-name">設計レビュー前(干渉あり)</span>
+    </div>
+    <div class="header-buttons">
+      <span class="header-btn undo">↶ 戻る</span>
+      <span class="header-btn primary">保存</span>
+      <span class="header-btn">メニュー ▾</span>
+    </div>
+    <div class="tabs">
+      <span class="view-toggle">▢ 平面</span>
+      <span class="tab">配管</span>
+      <span class="tab">ダクト</span>
+      <span class="tab">躯体</span>
+      <span class="tab">機器</span>
+      <span class="tab active">選択</span>
+      <span class="tab">干渉</span>
+      <span class="tab">集計</span>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="canvas-area" style="position: relative;">
+      <div class="obstacle" style="left: 80px; top: 50px; width: 320px; height: 12px;">梁 GX1</div>
+      <div class="pipe cwh" style="left: 130px; top: 100px; width: 200px; box-shadow: 0 0 0 3px #f6e05e;"></div>
+      <div class="node selected" style="left: 130px; top: 100px;"></div>
+      <div class="node selected" style="left: 330px; top: 100px;"></div>
+    </div>
+    <div class="panel" style="width: 280px;">
+      <div class="panel-title">配管属性</div>
+      <div class="property-row">
+        <div class="property-label">管種</div>
+        <div class="property-value">冷温水 ▾</div>
+      </div>
+      <div class="property-row">
+        <div class="property-label">口径</div>
+        <div class="property-value">φ50 ▾</div>
+      </div>
+      <div class="property-row">
+        <div class="property-label">系統</div>
+        <div class="property-value">冷-1</div>
+      </div>
+      <div class="property-row">
+        <div class="property-label">始点FL+</div>
+        <div class="property-value">2100</div>
+      </div>
+      <div class="property-row">
+        <div class="property-label">終点FL+</div>
+        <div class="property-value">2100</div>
+      </div>
+      <div class="property-row">
+        <div class="property-label">保温厚 (mm)</div>
+        <div class="property-value">25</div>
+      </div>
+      <div class="property-hint">結露防止・断熱用。冷温水標準: 25mm</div>
+      <div class="property-row">
+        <div class="property-label">施工離隔 (mm)</div>
+        <div class="property-value">50</div>
+      </div>
+      <div class="property-hint">メンテ・施工アクセス用クリアランス</div>
+      <div class="property-row">
+        <div class="property-label">長さ(自動)</div>
+        <div class="property-value readonly">5,000 mm</div>
+      </div>
+      <div style="margin-top: 10px;">
+        <span class="btn-primary" style="background:#c53030">削除</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="legend">
+  <strong>説明:</strong> キャンバス上で要素を選択するとパネルに属性が表示される。管種・口径・系統・始点/終点レベルに加え、保温厚と施工離隔を編集可能(離隔考慮の干渉判定で使用)。<br>
+  排水・ドレンは勾配も編集可能(分母指定、1/50など)。躯体・機器選択時は範囲やレベル、機器名を編集できる。
+</div>
+
+<!-- 画面4: 干渉チェック画面 -->
+<h2>画面4: 干渉チェック画面</h2>
+<div class="screen">
+  <div class="screen-header">
+    <div class="header-left">
+      <span>Rebro Lite</span>
+      <span class="project-name">設計レビュー前(干渉あり)</span>
+    </div>
+    <div class="header-buttons">
+      <span class="header-btn undo">↶ 戻る</span>
+      <span class="header-btn primary">保存</span>
+      <span class="header-btn">メニュー ▾</span>
+    </div>
+    <div class="tabs">
+      <span class="view-toggle">▢ 平面</span>
+      <span class="tab">配管</span>
+      <span class="tab">ダクト</span>
+      <span class="tab">躯体</span>
+      <span class="tab">機器</span>
+      <span class="tab">選択</span>
+      <span class="tab active">干渉 ★</span>
+      <span class="tab">集計</span>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="canvas-area" style="position: relative;">
+      <div class="obstacle" style="left: 80px; top: 50px; width: 320px; height: 12px;">梁 GX1</div>
+      <div class="obstacle column" style="left: 70px; top: 40px; width: 30px; height: 30px;">柱 C1</div>
+      <div class="obstacle" style="left: 80px; top: 200px; width: 320px; height: 12px;">梁 GX3</div>
+      <div class="pipe clash" style="left: 130px; top: 55px; width: 200px;"></div>
+      <div class="clash-mark" style="left: 230px; top: 55px;">⚠</div>
+      <div class="pipe cwh" style="left: 130px; top: 130px; width: 200px;"></div>
+      <div class="clearance-mark" style="left: 230px; top: 130px;">◆</div>
+      <div class="pipe drain" style="left: 130px; top: 250px; width: 280px;"></div>
+      <div class="sleeve-mark" style="left: 270px; top: 205px;">⊙</div>
+      <div class="node" style="left: 130px; top: 55px;"></div>
+      <div class="node" style="left: 330px; top: 55px;"></div>
+    </div>
+    <div class="panel" style="width: 270px;">
+      <div class="panel-title">干渉リスト (1件)</div>
+      <div class="clash-item">
+        <div class="item-title">⚠ 配管 vs 躯体</div>
+        <div class="item-detail">給水φ50 と 梁 GX1<br>FL+2300〜+2400 / FL+2200〜+2800</div>
+      </div>
+
+      <div class="panel-title" style="margin-top:14px">離隔不足 (1件)</div>
+      <div class="clearance-item">
+        <div class="item-title">◆ 配管 vs 躯体(離隔不足)</div>
+        <div class="item-detail">冷温水φ50(離隔+75mm)が梁の高さ範囲と離隔不足</div>
+      </div>
+
+      <div class="panel-title" style="margin-top:14px">勾配警告 (1件)</div>
+      <div class="warn-item">
+        <div class="item-title">⚠ 逆勾配</div>
+        <div class="item-detail">排水φ100: 始点 FL+1500 → 終点 FL+1600 は流下方向に上がっています</div>
+      </div>
+
+      <div class="panel-title" style="margin-top:14px">梁スリーブ要 (1件)</div>
+      <div class="sleeve-item">
+        <div class="item-title">⊙ スリーブ要</div>
+        <div class="item-detail">排水φ100 が梁 GX3 を横断(梁内に完全内包)</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="legend">
+  <strong>説明:</strong> 干渉箇所は赤(⚠ 実干渉)、離隔不足は青(◆ 保温厚+施工離隔を考慮した位置関係)、梁スリーブ要は橙(⊙ 梁内に配管が完全内包)で表示。<br>
+  右パネルでは干渉・離隔不足・勾配警告・梁スリーブ要を分類して一覧表示。各項目クリックで該当箇所にフォーカス。<br>
+  検出ロジックは AABB(軸並行バウンディングボックス)の重なり判定 + 高さ範囲の重なり判定。
+</div>
+
+<!-- 画面5: アイソメ図(確認専用ビュー) -->
+<h2>画面5: アイソメ図(確認専用ビュー)</h2>
+<div class="screen">
+  <div class="screen-header">
+    <div class="header-left">
+      <span>Rebro Lite</span>
+      <span class="project-name">設計レビュー前(干渉あり)</span>
+    </div>
+    <div class="header-buttons">
+      <span class="header-btn undo">↶ 戻る</span>
+      <span class="header-btn primary">保存</span>
+      <span class="header-btn">メニュー ▾</span>
+    </div>
+    <div class="tabs">
+      <span class="view-toggle" style="background:#805ad5">◆ アイソメ</span>
+      <span class="tab active">配管</span>
+      <span class="tab">ダクト</span>
+      <span class="tab">躯体</span>
+      <span class="tab">機器</span>
+      <span class="tab">選択</span>
+      <span class="tab">干渉</span>
+      <span class="tab">集計</span>
+    </div>
+  </div>
+  <div class="screen-body">
+    <div class="iso-canvas">
+      <svg width="100%" height="100%" viewBox="-200 -100 800 500" preserveAspectRatio="xMidYMid meet">
+        <!-- 床面の梁(等角投影) -->
+        <polygon points="0,200 200,140 380,180 180,240" fill="#d4d1c0" stroke="#888" stroke-width="0.5"/>
+        <polygon points="0,200 0,210 180,250 180,240" fill="#a8a690" stroke="#888" stroke-width="0.5"/>
+        <polygon points="180,240 180,250 380,190 380,180" fill="#bcb9a0" stroke="#888" stroke-width="0.5"/>
+
+        <polygon points="200,140 400,80 580,120 380,180" fill="#d4d1c0" stroke="#888" stroke-width="0.5"/>
+        <polygon points="380,180 380,190 580,130 580,120" fill="#bcb9a0" stroke="#888" stroke-width="0.5"/>
+
+        <!-- 柱(高さあり) -->
+        <polygon points="160,160 180,156 180,260 160,264" fill="#a8a690" stroke="#666" stroke-width="0.5"/>
+        <polygon points="180,156 200,160 200,264 180,260" fill="#c4c0a8" stroke="#666" stroke-width="0.5"/>
+        <polygon points="160,160 180,156 200,160 180,164" fill="#d4d1c0" stroke="#666" stroke-width="0.5"/>
+
+        <!-- 配管(立体的に) -->
+        <line x1="50" y1="180" x2="280" y2="100" stroke="#2b6cb0" stroke-width="3" stroke-linecap="round"/>
+        <line x1="280" y1="100" x2="280" y2="50" stroke="#2b6cb0" stroke-width="3" stroke-linecap="round"/>
+        <line x1="280" y1="100" x2="420" y2="120" stroke="#38a169" stroke-width="3" stroke-linecap="round"/>
+
+        <!-- 凡例 -->
+        <text x="-160" y="-50" font-size="11" fill="#444" font-weight="bold">アイソメ図(等角投影)</text>
+        <text x="-160" y="-30" font-size="9" fill="#666">確認専用ビュー</text>
+        <text x="-160" y="-15" font-size="9" fill="#666">編集する場合は「平面」に戻す</text>
+      </svg>
+      <div class="floor-info">
+        3F 階高 3000<br>CH 2700 天井懐 300
+      </div>
+    </div>
+    <div class="sidebar-right" style="width: 200px">
+      <div class="panel-title">レイヤ</div>
+      <div class="sidebar-item">👁 配管/ダクト/躯体/機器</div>
+      <div class="panel-title" style="margin-top:14px">高さ情報</div>
+      <div style="font-size:10px; color:#555; line-height:1.5;">
+        FL+0(床)<br>
+        FL+2100(冷温水中心)<br>
+        FL+2300〜2800(梁せい)<br>
+        FL+2700(天井)<br>
+        FL+3000(天井懐上端)
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span>視点: アイソメ | モード: 配管描画(編集不可) | 給水 φ50 / FL+2500</span>
+    <span>30度等角投影 / 倍率: 32%</span>
+  </div>
+</div>
+<div class="legend">
+  <strong>説明:</strong> 30度等角投影による3D風表示。躯体・機器・ダクトは3面表示の直方体、配管は太線で立体的に描画。<br>
+  描画順序の制御:固定要素(柱・梁・機器)を視点遠近で並べ、配管・ダクトは「far(梁の前)→ 梁 → within(梁の中)→ near(梁の後)」を厳密に守る。<br>
+  <strong>確認専用ビュー</strong>:編集機能は無効化。平面ビューに戻して編集する設計。
+</div>
+
+<!-- 画面6: 拾い集計画面 -->
+<h2>画面6: 拾い集計画面</h2>
+<div class="screen" style="background: #d0d4d9;">
+  <div class="screen-header">
+    <div class="header-left">
+      <span>Rebro Lite</span>
+      <span class="project-name">設計レビュー前(干渉あり)</span>
+    </div>
+    <div class="header-buttons">
+      <span class="header-btn undo">↶ 戻る</span>
+      <span class="header-btn primary">保存</span>
+      <span class="header-btn">メニュー ▾</span>
+    </div>
+    <div class="tabs">
+      <span class="view-toggle">▢ 平面</span>
+      <span class="tab">配管</span>
+      <span class="tab">ダクト</span>
+      <span class="tab">躯体</span>
+      <span class="tab">機器</span>
+      <span class="tab">選択</span>
+      <span class="tab">干渉</span>
+      <span class="tab active">集計</span>
+    </div>
+  </div>
+  <div class="drawer">
+    <div class="drawer-header">
+      <span class="drawer-title">拾い集計</span>
+      <span class="btn-primary">📊 Excelで出力</span>
+    </div>
+
+    <div class="table-title">配管 管種別集計</div>
+    <table>
+      <thead>
+        <tr><th>管種</th><th>口径</th><th class="num">本数</th><th class="num">長さ合計</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>給水</td><td>φ50</td><td class="num">5</td><td class="num">14,000 mm</td></tr>
+        <tr><td>排水</td><td>φ100</td><td class="num">3</td><td class="num">8,500 mm</td></tr>
+        <tr><td>冷温水</td><td>φ50</td><td class="num">4</td><td class="num">11,200 mm</td></tr>
+        <tr><td>ドレン</td><td>φ25</td><td class="num">2</td><td class="num">3,400 mm</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-title">配管継手集計</div>
+    <table>
+      <thead>
+        <tr><th>種類</th><th>口径</th><th class="num">個数</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>エルボ</td><td>φ50</td><td class="num">8</td></tr>
+        <tr><td>チーズ</td><td>φ50</td><td class="num">3</td></tr>
+        <tr><td>エルボ</td><td>φ100</td><td class="num">4</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-title">ダクト集計</div>
+    <table>
+      <thead>
+        <tr><th>種別</th><th>形状</th><th>サイズ</th><th class="num">本数</th><th class="num">長さ合計</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>給気</td><td>角</td><td>300×200</td><td class="num">2</td><td class="num">6,400 mm</td></tr>
+        <tr><td>還気</td><td>丸</td><td>φ250</td><td class="num">1</td><td class="num">3,200 mm</td></tr>
+      </tbody>
+    </table>
+
+    <div class="table-title">系統別集計</div>
+    <table>
+      <thead>
+        <tr><th>系統</th><th class="num">本数</th><th class="num">長さ合計</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>給-1</td><td class="num">5</td><td class="num">14,000 mm</td></tr>
+        <tr><td>冷-1</td><td class="num">4</td><td class="num">11,200 mm</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="legend">
+  <strong>説明:</strong> 配管・ダクトのエッジを管種/種別・口径(サイズ)でグループ化、長さを合算。継手は節点(ノード)の接続エッジ数と角度から動的に判定してカウント。<br>
+  Excel出力は SheetJS で .xlsx 生成。プロジェクト情報・各種集計・配管/ダクト詳細・干渉一覧(実干渉/離隔不足の区分付き)・勾配警告・梁スリーブ要・機器一覧のシートを含む。
+</div>
+
+</body>
+</html>
